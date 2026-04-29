@@ -1,12 +1,11 @@
 import time
 from fastapi import APIRouter
-from app.api.transactions import TRANSACTIONS, BALANCES
+from app.api.transactions import TRANSACTIONS
 from app.api.banks import get_bank_registry
+from app.services.db import get_balance
 
 router = APIRouter(tags=["mesh"])
 
-# Simulated relay node registry
-# In prod this is populated by BLE discovery + relay node self-registration
 RELAY_NODES: dict = {
     "relay_node_A": {"had_internet": True,  "last_seen": int(time.time()), "packets_relayed": 0},
     "relay_node_B": {"had_internet": False, "last_seen": int(time.time()), "packets_relayed": 0},
@@ -15,11 +14,7 @@ RELAY_NODES: dict = {
 
 @router.get("/mesh/health")
 def mesh_health():
-    """
-    Network stats for the mesh monitor screen.
-    Shows relay node count, transaction stats, bank registry status.
-    """
-    now = int(time.time())
+    now          = int(time.time())
     total_tx     = len(TRANSACTIONS)
     success_tx   = sum(1 for t in TRANSACTIONS.values() if t["status"] == "SUCCESS")
     failed_tx    = sum(1 for t in TRANSACTIONS.values() if t["status"] == "FAILED")
@@ -30,15 +25,15 @@ def mesh_health():
     return {
         "timestamp": now,
         "relay_nodes": {
-            "total":          total_nodes,
+            "total":            total_nodes,
             "internet_capable": online_nodes,
-            "offline_only":   total_nodes - online_nodes,
-            "nodes":          RELAY_NODES,
+            "offline_only":     total_nodes - online_nodes,
+            "nodes":            RELAY_NODES,
         },
         "transactions": {
-            "total":   total_tx,
-            "success": success_tx,
-            "failed":  failed_tx,
+            "total":        total_tx,
+            "success":      success_tx,
+            "failed":       failed_tx,
             "success_rate": f"{(success_tx/total_tx*100):.1f}%" if total_tx > 0 else "N/A",
         },
         "banks": {
@@ -46,14 +41,13 @@ def mesh_health():
             "online":     sum(1 for b in banks.values() if b["online"]),
         },
         "balances": {
-            upi: {"paise": bal, "rupees": bal/100}
-            for upi, bal in BALANCES.items()
+            upi: {"paise": get_balance(upi), "rupees": get_balance(upi) / 100}
+            for upi in ["alice@upi", "bob@upi"]
         },
     }
 
 @router.post("/mesh/node/{node_id}/ping")
 def ping_node(node_id: str, had_internet: bool = True):
-    """Relay node self-registers or updates its status."""
     RELAY_NODES[node_id] = {
         "had_internet":    had_internet,
         "last_seen":       int(time.time()),
