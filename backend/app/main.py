@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.dirname(__file__) + "/../../crypto")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import banks, transactions, mesh
+from app.api import banks, transactions, mesh, demo
 from app.api import ws
 
 app = FastAPI(
@@ -24,6 +24,7 @@ app.add_middleware(
 app.include_router(banks.router,        prefix="/api/v1")
 app.include_router(transactions.router, prefix="/api/v1")
 app.include_router(mesh.router,         prefix="/api/v1")
+app.include_router(demo.router,         prefix="/api/v1")
 app.include_router(ws.router)
 
 @app.get("/health")
