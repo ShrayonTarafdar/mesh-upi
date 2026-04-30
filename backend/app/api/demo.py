@@ -56,3 +56,16 @@ def demo_send(req: DemoSendRequest):
     )
     result = process_transaction(tx_req)
     return result
+
+@router.get("/demo/debug")
+def demo_debug():
+    import traceback
+    try:
+        pem_data = os.getenv("BANK_PRIV_KEY_PEM")
+        if not pem_data:
+            return {"error": "BANK_PRIV_KEY_PEM not set"}
+        bank_priv = load_pem_private_key(pem_data.encode(), password=None)
+        bank_pub = bank_priv.public_key()
+        return {"status": "ok", "key_type": str(type(bank_priv)), "pem_length": len(pem_data)}
+    except Exception as e:
+        return {"error": str(e), "trace": traceback.format_exc()}
