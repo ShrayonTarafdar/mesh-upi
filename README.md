@@ -88,7 +88,7 @@ Packet structure:
 ---
 
 ## Project Structure
-
+```
 mesh-upi/
 ├── backend/
 │   ├── Dockerfile
@@ -128,6 +128,7 @@ mesh-upi/
 │   └── migrations/
 │       └── 001_initial_schema.sql
 └── docker-compose.yml
+```
 ---
 
 ## API Endpoints
@@ -263,12 +264,19 @@ CREATE TABLE relay_events (
 
 ## Test Results
 TEST 1: Valid transaction alice → bob ₹100     PASS
+
 TEST 2: Duplicate packet (replay attack)        PASS
+
 TEST 3: Insufficient balance                    PASS
+
 TEST 4: Balance check after transactions        PASS
+
 TEST 5: Status polling                          PASS
+
 WebSocket live push test                        PASS
+
 Crypto verifier (4/4 edge cases)               PASS
+
 Race condition (10 threads, 1 winner)           PASS
 
 ---
