@@ -26,8 +26,12 @@ def demo_send(req: DemoSendRequest):
     from packet import build_packet
 
     # Load test bank private key and extract public key
-    with open("/tmp/test_bank_priv.pem", "rb") as f:
-        bank_priv = load_pem_private_key(f.read(), password=None)
+    pem_data = os.getenv("BANK_PRIV_KEY_PEM")
+    if pem_data:
+        bank_priv = load_pem_private_key(pem_data.encode(), password=None)
+    else:
+        with open("/tmp/test_bank_priv.pem", "rb") as f:
+            bank_priv = load_pem_private_key(f.read(), password=None)
     bank_pub = bank_priv.public_key()
 
     # Generate fresh sender keypair for this demo transaction
