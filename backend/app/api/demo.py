@@ -1,9 +1,7 @@
 import sys
 import os
 import base64
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../../crypto"))
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
@@ -15,6 +13,25 @@ class DemoSendRequest(BaseModel):
     recipient_upi: str
     amount_paise:  int
 
+def load_bank_private_key():
+    pem_data = os.getenv("BANK_PRIV_KEY_PEM")
+    if pem_data:
+        # Fix escaped newlines from env var storage
+        pem_data = pem_data.replace("\\n", "\n").replace("\\r", "")
+        return load_pem_private_key(pem_data.encode(), password=None)
+    with open("/tmp/test_bank_priv.pem", "rb") as f:
+        return load_pem_private_key(f.read(), password=None)
+
+@router.get("/demo/debug")
+def demo_debug():
+    import traceback
+    try:
+        key = load_bank_private_key()
+        pem_data = os.getenv("BANK_PRIV_KEY_PEM", "NOT SET")
+        return {"status": "ok", "key_type": str(type(key)), "pem_length": len(pem_data)}
+    except Exception as e:
+        return {"error": str(e), "trace": traceback.format_exc()}
+
 @router.post("/demo/send")
 def demo_send(req: DemoSendRequest):
     """
@@ -25,19 +42,10 @@ def demo_send(req: DemoSendRequest):
     from keys import generate_ed25519_keypair
     from packet import build_packet
 
-    # Load test bank private key and extract public key
-    pem_data = os.getenv("BANK_PRIV_KEY_PEM")
-    if pem_data:
-        pem_data = pem_data.replace("\\n", "\n")
-        bank_priv = load_pem_private_key(pem_data.encode(), password=None)
-    else:
-        with open("/tmp/test_bank_priv.pem", "rb") as f:
-            bank_priv = load_pem_private_key(f.read(), password=None)
+    bank_priv = load_bank_private_key()
     bank_pub = bank_priv.public_key()
 
-    # Generate fresh sender keypair for this demo transaction
     sender_priv, sender_pub = generate_ed25519_keypair()
-
     packet = build_packet(
         sender_upi        = req.sender_upi,
         recipient_upi     = req.recipient_upi,
@@ -46,10 +54,8 @@ def demo_send(req: DemoSendRequest):
         bank_rsa_pub      = bank_pub,
     )
 
-    # Now process it immediately (simulating relay node forwarding)
     from app.api.transactions import process_transaction
     from app.models.transaction import TransactionRequest
-
     tx_req = TransactionRequest(
         **packet,
         sender_pub_key_b64 = base64.b64encode(sender_pub).decode(),
@@ -57,16 +63,3 @@ def demo_send(req: DemoSendRequest):
     )
     result = process_transaction(tx_req)
     return result
-
-@router.get("/demo/debug")
-def demo_debug():
-    import traceback
-    try:
-        pem_data = os.getenv("BANK_PRIV_KEY_PEM")
-        if not pem_data:
-            return {"error": "BANK_PRIV_KEY_PEM not set"}
-        bank_priv = load_pem_private_key(pem_data.encode(), password=None)
-        bank_pub = bank_priv.public_key()
-        return {"status": "ok", "key_type": str(type(bank_priv)), "pem_length": len(pem_data)}
-    except Exception as e:
-        return {"error": str(e), "trace": traceback.format_exc()}
