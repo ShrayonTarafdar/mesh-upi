@@ -83,6 +83,7 @@ Packet structure:
   "encrypted_payload": "AES-256-GCM({sender, recipient, amount_paise, timestamp, nonce})",
   "signature": "Ed25519(sender_privkey, header || ciphertext)"
 }
+```
 
 ---
 
@@ -193,6 +194,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ---
 
 ## Database Schema
+```sql
 CREATE TABLE users (
     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     upi_id         TEXT UNIQUE NOT NULL,
@@ -241,6 +243,7 @@ CREATE TABLE relay_events (
     had_internet   BOOLEAN DEFAULT FALSE,
     event_at       TIMESTAMPTZ DEFAULT NOW()
 );
+```
 
 ---
 
@@ -272,4 +275,4 @@ Race condition (10 threads, 1 winner)           PASS
 
 ## Author
 
-**Shrayon Tarafdar** GitHub: [@ShrayonTarafdar](https://github.com/ShrayonTarafdar) READMEEOF
+**Shrayon Tarafdar** GitHub: [@ShrayonTarafdar](https://github.com/ShrayonTarafdar)
