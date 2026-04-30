@@ -28,12 +28,15 @@ def _load_bank_private_key():
     from cryptography.hazmat.primitives.serialization import load_pem_private_key
     pem_data = os.getenv("BANK_PRIV_KEY_PEM")
     if pem_data:
+        pem_data = pem_data.replace("\\n", "\n")
         return load_pem_private_key(pem_data.encode(), password=None)
     pem_data = os.getenv("BANK_PRIV_KEY_PEM")
     if pem_data:
+        pem_data = pem_data.replace("\\n", "\n")
         return load_pem_private_key(pem_data.encode(), password=None)
     pem_data = os.getenv("BANK_PRIV_KEY_PEM")
     if pem_data:
+        pem_data = pem_data.replace("\\n", "\n")
         return load_pem_private_key(pem_data.encode(), password=None)
     path = os.getenv("BANK_PRIV_KEY_PATH", "/tmp/test_bank_priv.pem")
     with open(path, "rb") as f:

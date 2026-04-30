@@ -28,6 +28,7 @@ def demo_send(req: DemoSendRequest):
     # Load test bank private key and extract public key
     pem_data = os.getenv("BANK_PRIV_KEY_PEM")
     if pem_data:
+        pem_data = pem_data.replace("\\n", "\n")
         bank_priv = load_pem_private_key(pem_data.encode(), password=None)
     else:
         with open("/tmp/test_bank_priv.pem", "rb") as f:
